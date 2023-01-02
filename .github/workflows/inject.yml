@@ -63,7 +63,7 @@ jobs:
           APP_NAME: ${{ inputs.app_name }}
           SARELLA_URL: ${{ inputs.satella_url }}
         run: |
-          curl "${{ env.APP_URL }}" --output "~/${{ env.APP_NAME }}.ipa"
+          curl "${{ env.APP_URL }}" --output "/tmp/${{ env.APP_NAME }}.ipa"
           curl "${{ env.SATELLA_URL }}" --output "~/satella.dylib"
       - name: Inject
         env: 
