@@ -1,0 +1,87 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      satella-url:
+        description: "The direct URL to satella jailed dylib"
+        default: "https://github.com/Paisseon/SatellaJailed/blob/emt/SatellaJailed.dylib?raw=true"
+        required: true
+        type: string
+      app_url:
+        description: "The direct URL to the decrypted ipa"
+        default: ""
+        required: true
+        type: string
+      app_name:
+        description: "The app name"
+        default: ""
+        required: true
+        type: string
+      create_release:
+        description: "Create a draft release"
+        default: true
+        required: false
+        type: boolean
+        
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+      # Runs a set of commands using the runners shell
+      - name: Install Azule
+        run: |
+          sudo apt install jq git curl rsync xz-utils unzip zip libxml2 libc++abi-dev
+          git clone https://github.com/Al4ise/Azule ~/Azule
+          sudo ln -sf ~/Azule/azule /usr/local/bin/azule
+      - name: Download ipa and Satella
+        run: |
+          curl "${{ env.APP_URL }}" --output "main/${{ env.APP_NAME }}.ipa"
+          curl "${{ env.SATELLA_URL }}" --output "main/satella.dylib"
+      - name: Inject
+        run: | 
+          azule -n ${{ env.APP_NAME }} -i main/${{ env.APP_NAME }}.ipa -o main/${{ env.APP_NAME }}-Final -f main/satella.dylib
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        env:
+          APP_NAME: ${{ inputs.APP_NAME }}
+        with:
+          name: ${{ env.APP_NAME }}
+          path: ${{ github.workspace }}/main/packages/${{ steps.build_package.outputs.package }}
+          if-no-files-found: error
+          
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v0.1.15
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APP_NAME: ${{ inputs.app_name }}
+          DRAFT: ${{ inputs.create_release }}
+        with:
+          tag_name: v${{ env.APP_NAME }}-(${{ github.run_number }})
+          name: v${{ env.APP_NAME }}-(${{ github.run_number }})
+          files: main/packages/*.ipa
+          draft: ${{ env.DRAFT }}
