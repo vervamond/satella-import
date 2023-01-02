@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Inject Satella
 
 # Controls when the workflow will run
 on:
@@ -58,10 +58,15 @@ jobs:
           git clone https://github.com/Al4ise/Azule ~/Azule
           sudo ln -sf ~/Azule/azule /usr/local/bin/azule
       - name: Download ipa and Satella
+        env: 
+          APP_URL: ${{ inputs.app_url }}
+          SARELLA_URL: ${{ inputs.satella_url }}
         run: |
           curl "${{ env.APP_URL }}" --output "main/${{ env.APP_NAME }}.ipa"
           curl "${{ env.SATELLA_URL }}" --output "main/satella.dylib"
       - name: Inject
+        env: 
+          APP_URL: ${{ inputs.app_url }}
         run: | 
           azule -n ${{ env.APP_NAME }} -i main/${{ env.APP_NAME }}.ipa -o main/${{ env.APP_NAME }}-Final -f main/satella.dylib
       - name: Upload Artifact
