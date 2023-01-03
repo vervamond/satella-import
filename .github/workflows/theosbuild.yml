@@ -4,29 +4,24 @@ name: Inject with Theos Jailed
 on:
   workflow_dispatch:
     inputs:
-      uyou_version:
-        description: "The version of uYou"
-        default: "2.3~1"
-        required: true
-        type: string
-      decrypted_youtube_url:
-        description: "The direct URL to the decrypted YouTube ipa"
+      app_url:
+        description: "The direct URL to the decrypted ipa"
         default: ""
         required: true
         type: string
-      youtube_version:
-        description: "The version of YouTube"
+      tweak:
+        description: "The direct URL to the tweak (satella, spotilife, etc)"
+        default: "https://github.com/Paisseon/SatellaJailed/blob/emt/SatellaJailed.dylib?raw=true"
+        required: true
+        type: string
+      app_name:
+        description: "App Name"
         default: ""
         required: true
         type: string
       bundle_id:
-        description: "Modify the bundle ID. Not recommended"
-        default: "com.google.ios.youtube"
-        required: true
-        type: string
-      app_name:
-        description: "Modify the name of the app on the Home Screen. Not recommended"
-        default: "YouTube"
+        description: "Bundle ID (NOT RECOMENDED TO CHANGE)"
+        default: ""
         required: true
         type: string
       create_release:
@@ -95,22 +90,22 @@ jobs:
         env:
           THEOS: ${{ github.workspace }}/theos
 
-      - name: Download uYou & Prepare YouTube iPA
+      - name: Download Tweak & Prepare iPA
         run: |
           curl "https://raw.githubusercontent.com/Muirey03/RemoteLog/master/RemoteLog.h" --output "$THEOS/include/RemoteLog.h"
-          curl "https://miro92.com/repo/debs/com.miro.uyou_${{ env.UYOU_VERSION }}_iphoneos-arm.deb" --output "main/Tweaks/uYou/com.miro.uyou_${{ env.UYOU_VERSION }}_iphoneos-arm.deb"
-          echo -e "==> uYou v${{ env.UYOU_VERSION }} downloaded!"
-          wget "$YOUTUBE_URL" --no-verbose -O main/YouTube.ipa
-          echo -e "==> YouTube v${{ inputs.youtube_version }} downloaded!"
-          dpkg-deb -x "main/Tweaks/uYou/com.miro.uyou_${{ env.UYOU_VERSION }}_iphoneos-arm.deb" main/Tweaks/uYou/
-          unzip -q main/YouTube.ipa -d main/tmp
-          rm -rf main/tmp/Payload/YouTube.app/PlugIns/*
-          cp -R main/Extensions/*.appex main/tmp/Payload/YouTube.app/PlugIns
+          curl "${{ env.TWEAK_URL }}" --output "main/Tweak/tweak.deb"
+          echo -e "==> Tweak downloaded!"
+          wget "$APP_URL" --no-verbose -O main/app.ipa
+          echo -e "==> v${{ env.APP_NAME }} downloaded!"
+          dpkg-deb -x "main/Tweak/tweak.deb" main/Tweak/tweak/
+          unzip -q main/app.ipa -d main/tmp
+          rm -rf main/tmp/Payload/app.app/PlugIns/*
+          cp -R main/Extensions/*.appex main/tmp/Payload/app.app/PlugIns
         env:
           THEOS: ${{ github.workspace }}/theos
-          UYOU_VERSION: ${{ inputs.uyou_version }}
-          YOUTUBE_VERSION: ${{ inputs.youtube_version }}
-          YOUTUBE_URL: ${{ inputs.decrypted_youtube_url }}
+          TWEAK_URL: ${{ inputs.tweak_url }}
+          APP_NAME: ${{ inputs.app_name }}
+          APP_URL: ${{ inputs.app_url }}
 
       - name: Fix compiling & Build Package
         id: build_package
@@ -120,24 +115,22 @@ jobs:
           sed -i '' "12s#.*#BUNDLE_ID = ${{ env.BUNDLE_ID }}#g" Makefile
           sed -i '' "11s#.*#DISPLAY_NAME = ${{ env.APP_NAME }}#g" Makefile          
           make package FINALPACKAGE=1
-          (mv "packages/$(ls -t packages | head -n1)" "packages/uYouPlus_${{ env.YOUTUBE_VERSION  }}_${{ env.UYOU_VERSION }}.ipa")
+          (mv "packages/$(ls -t packages | head -n1)" "packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}.ipa")
           echo "package=$(ls -t packages | head -n1)" >>$GITHUB_OUTPUT
           echo -e "==> \033[1mSHASUM256: $(shasum -a 256 packages/*.ipa | cut -f1 -d' ')\033[0m"
           echo -e "==> \033[1mBundle ID: ${{ env.BUNDLE_ID }}\033[0m"
         env:
           THEOS: ${{ github.workspace }}/theos
-          UYOU_VERSION: ${{ inputs.uyou_version }}
-          YOUTUBE_VERSION: ${{ inputs.youtube_version }}
+          APP_VERSION: ${{ inputs.app_version }}
           BUNDLE_ID: ${{ inputs.bundle_id }}
           APP_NAME: ${{ inputs.app_name }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
         env:
-          UYOU_VERSION: ${{ inputs.uyou_version }}
-          YOUTUBE_VERSION: ${{ inputs.youtube_version }}
+          APP_VERSION: ${{ inputs.app_version }}
         with:
-          name: uYouPlus_${{ env.YOUTUBE_VERSION }}_${{ env.UYOU_VERSION }}
+          name: ${{ env.APP_NAME }}_${{ env.app_VERSION }}
           path: ${{ github.workspace }}/main/packages/${{ steps.build_package.outputs.package }}
           if-no-files-found: error
 
@@ -147,10 +140,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           UYOU_VERSION: ${{ inputs.uyou_version }}
-          YOUTUBE_VERSION: ${{ inputs.youtube_version }}
+          app_VERSION: ${{ inputs.app_version }}
           DRAFT: ${{ inputs.create_release }}
         with:
-          tag_name: v${{ env.YOUTUBE_VERSION }}-${{ env.UYOU_VERSION }}-(${{ github.run_number }})
-          name: v${{ env.YOUTUBE_VERSION }}-${{ env.UYOU_VERSION }}-(${{ github.run_number }})
+          tag_name: v${{ env.APP_NAME }}-(${{ github.run_number }})
+          name: v${{ env.APP_NAME }}-(${{ github.run_number }})
           files: main/packages/*.ipa
           draft: ${{ env.DRAFT }}
