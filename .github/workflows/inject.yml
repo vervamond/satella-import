@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Inject Satella
+name: Inject Tweak
 
 # Controls when the workflow will run
 on:
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       satella-url:
-        description: "The direct URL to satella jailed dylib"
+        description: "The direct URL to dylib/deb (satella, etc)"
         default: "https://github.com/Paisseon/SatellaJailed/blob/emt/SatellaJailed.dylib?raw=true"
         required: true
         type: string
@@ -63,13 +63,13 @@ jobs:
           APP_NAME: ${{ inputs.app_name }}
           SARELLA_URL: ${{ inputs.satella_url }}
         run: |
-          curl "${{ env.APP_URL }}" --output "/tmp/${{ env.APP_NAME }}.ipa"
-          curl "${{ env.SATELLA_URL }}" --output "~/satella.dylib"
+          curl "${{ env.APP_URL }}" --output "${{ env.APP_NAME }}.ipa"
+          curl "${{ env.SATELLA_URL }}" --output "tweak.dylib"
       - name: Inject
         env: 
           APP_NAME: ${{ inputs.app_name }}
         run: | 
-          azule -n ${{ env.APP_NAME }} -i ~/${{ env.APP_NAME }}.ipa -o ~/${{ env.APP_NAME }}-Final -f ~/satella.dylib
+          azule -n ${{ env.APP_NAME }} -i ~/${{ env.APP_NAME }}.ipa -o ~/${{ env.APP_NAME }}-Final -f ~/tweak.dylib
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
         env:
