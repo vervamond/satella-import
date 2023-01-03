@@ -14,7 +14,7 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
-      satella-url:
+      tweak_url:
         description: "The direct URL to dylib/deb (satella, etc)"
         default: "https://github.com/Paisseon/SatellaJailed/blob/emt/SatellaJailed.dylib?raw=true"
         required: true
@@ -61,10 +61,10 @@ jobs:
         env: 
           APP_URL: ${{ inputs.app_url }}
           APP_NAME: ${{ inputs.app_name }}
-          SARELLA_URL: ${{ inputs.satella_url }}
+          TWEAK_URL: ${{ inputs.tweak_url }}
         run: |
           curl "${{ env.APP_URL }}" --output "${{ env.APP_NAME }}.ipa"
-          curl "${{ env.SATELLA_URL }}" --output "tweak.dylib"
+          curl "${{ env.TWEAK_URL }}" --output "tweak.dylib"
       - name: Inject
         env: 
           APP_NAME: ${{ inputs.app_name }}
