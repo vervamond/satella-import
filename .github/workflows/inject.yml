@@ -63,8 +63,8 @@ jobs:
           APP_NAME: ${{ inputs.app_name }}
           TWEAK_URL: ${{ inputs.tweak_url }}
         run: |
-          curl "${{ env.APP_URL }}" --output "${{ env.APP_NAME }}.ipa"
-          curl "${{ env.TWEAK_URL }}" --output "tweak.dylib"
+          curl "${{ env.APP_URL }}" --output "~/${{ env.APP_NAME }}.ipa"
+          curl "${{ env.TWEAK_URL }}" --output "~/tweak.dylib"
       - name: Inject
         env: 
           APP_NAME: ${{ inputs.app_name }}
