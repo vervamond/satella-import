@@ -93,7 +93,7 @@ jobs:
       - name: Download Tweak & Prepare iPA
         run: |
           curl "https://raw.githubusercontent.com/Muirey03/RemoteLog/master/RemoteLog.h" --output "$THEOS/include/RemoteLog.h"
-          curl "${{ env.TWEAK_URL }}" --output "main/Tweak/tweak.deb"
+          curl "${{ input.TWEAK_URL }}" --output "main/Tweak/tweak.deb"
           echo -e "==> Tweak downloaded!"
           wget "$APP_URL" --no-verbose -O main/app.ipa
           echo -e "==> v${{ env.APP_NAME }} downloaded!"
